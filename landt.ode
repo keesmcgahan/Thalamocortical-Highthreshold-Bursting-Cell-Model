@@ -1,0 +1,141 @@
+# initialise the variables. v is the deviation from rest.
+V(0)=-85.0
+mNa(0) =.05 
+hNa(0) = .6
+mK(0)=.3
+mTLT(0) = .05
+hTLT(0)= .6
+Ca_i(0) =0.00004
+mcal(0) = .05
+hcal(0)= .6
+mAHP(0) =.3
+mCAN(0) =.3  
+#
+# set the remaining parameters
+
+
+param Iapp=2.5
+
+param gTLT_IN=3.4578
+param gM=.3692
+param gcal=0.2324
+param gH_IN =0.2230
+param gCAN =0
+param gnap=0.0263
+param gKL=0.1966
+param rvhalf=75
+param rslopek=5.5
+
+param gK_IN=4.4515
+param gL_IN=0.9791
+param vshift=55
+param gNa_IN=90
+param gAHP_IN=0
+param TEMP = 309.35
+
+param vhalfs=0
+
+
+param F=96485.3 Rgas=8.314 z = 2
+param EL_IN=-85 EK_IN=-100 ENa_IN=50
+param EH_IN = -43
+param ECAN= 10
+param Cm_IN = 1
+param cellAr=.0002895
+#
+# define the functions
+mV=1
+mmolar=1
+ms=1
+Vt=V+vshift
+alphamNa=(0.32*(13*mV-Vt))/(exp((13*mV-Vt)/4/mV)-1)/mV 
+betamNa = (0.28*(Vt-40*mV))/(exp((Vt-40*mV)/5/mV)-1)/mV 
+alphahNa=(0.128*exp((17*mV-Vt)/18/mV)) 
+betahNa = 4/(1+exp((40*mV-Vt)/5/mV))
+mNainf = alphamNa/(alphamNa+betamNa) 
+taumNa=1*ms/(alphamNa+betamNa)     
+hNainf = alphahNa/(alphahNa+betahNa) 
+tauhNa=1*ms/(alphahNa+betahNa) 
+alphamK = (0.032*(15*mV-Vt)/mV)/(exp((15*mV-Vt)/5/mV)-1)
+betamK=0.5 * exp((10*mV-Vt)/40/mV)
+mKinf = alphamK/(alphamK+betamK)
+taumK=1*ms/(alphamK+betamK)
+
+
+ECA_IN=Rgas*TEMP/(z*F)*ln(2/Ca_i)*1000
+
+mAHPinf= (48*Ca_i^2) / (48*Ca_i^2+.03)
+taumAHP = 1*ms/((48*Ca_i^2+.03))
+
+mCANinf= 1/(1+exp(-(V+43*mV)/5.2/mV))
+tauCAN=1.6+(2.7)/(exp(-(V+55)/15)+exp((V+55)/15))
+MMCAN=(Ca_i)/(Ca_i+.2)
+
+#hTLTinf = 1/(1+exp((V+83*mV-vhalfs)/4/mV))
+#tauhTLT=  (30.8+(211.4+exp((V+115.2*mV)/5))/(1+exp((V+86)/3.2)))
+#taumTLT= 1
+#mTLTinf = 1/(1+exp(-(V+59*mV-vhalfs)/6.2/mV))
+
+hTLTinf = 1/(1+exp((V+86*mV)/4/mV))
+tauhTLT=  1*ms*exp((V+470*mV)/66.6/mV)*heav(-V-83)+1*ms*(exp(-(V+25*mV)/10.5)+28)*heav(V+83)
+taumTLT= .612*ms+(1*ms)/(exp(-(V+135)/16.7)+(exp((V+19.8)/18.2)))
+mTLTinf = 1/(1+exp(-(V+62*mV)/6.2/mV))
+
+
+alphaq=.055*(-27-V)/(exp((-27-V)/3.8)-1)
+betaq=.94*exp((-75-V)/17)
+alphar=.000457*exp((-13-V)/50)
+betar=.0065/(exp((-15-V)/28)+1)
+
+
+mcalinf=1/(1+exp((-(V+10))/(4)))
+hcalinf=1/(1+exp(((V+25))/2))
+taumcal=.4+.7/(exp((-(V+5))/15)+exp(((V+5))/15))
+tauhcal=300+100/(exp((-(V+40))/9.5)+exp(((V+40))/9.5))
+
+pinf=1/(1+exp(-(V+35)/10))
+taup=1000/(3.3*exp((V+35)/20)+exp(-(V+35)/20))
+     
+tausr=(1*ms)/(exp(-.086*V-14.59)+exp((.07*V-1.87)))
+rinf = 1/(1+exp((V+rvhalf)/rslopek))
+
+mNAPinf=1/(1+exp(-(V+50)/5))
+	 
+#Currents
+INa=gNa_IN*mNa^3*hNa*(V-ENa_IN)
+IK=gK_IN*mK^4*(V-EK_IN)
+IL=.02*gL_IN*(V-EL_IN)
+#ITLT = gTLT_IN * mTLTinf^2 * hTLT * (V-ECA_IN)
+ITLT = gTLT_IN * mTLT^2 * hTLT * (V-ECA_IN)
+ICAL= gcal*mcal^2*hcal*(V-ECA_IN)
+IM=.3*gM*p*(V-EK_IN)
+IH = .3*gH_IN * r * (V-EH_IN)
+IKL=.02*3*gKL*(V-EK_IN)
+IAHP = gAHP_IN * mAHP^2  * (V-EK_IN)
+INAP=.5*gNAP*mNAPinf*(V-ENA_IN)
+ICAN=gCAN*MMCAN*mCAN*(V-ECAN)
+#
+# define the ODEs
+#V'=(-INa-IK-IL-ITLT+Iapp-IM-ICAL-IH-IAHP-INAP)/Cm_IN
+V'=(-INa-IK-IL-ITLT+Iapp-IM-ICAL-IH-IKL-IAHP-INAP-ICAN)/Cm_IN
+mNa' = (mNainf-mNa)/taumNa
+hNa' = (hNainf-hNa)/tauhNa
+mK'=(mKinf-mK)/taumK
+#Ca_i' = (5*(-ITLT-ICAL)/(2*96485.3))+ (.0002-Ca_i)/5
+Ca_i' = ((-ICAL-ITLT)/(2*96485.3*.5))- (Ca_i-0.00005)/10
+mTLT' = 4.6*(mTLTinf-mTLT)/taumTLT
+hTLT' = 3.7*(hTLTinf-hTLT)/tauhTLT
+mcal' = alphaq*(1-mcal)-betaq*mcal
+hcal' = alphar*(1-hcal)-betar*hcal
+#mcal' = 4.6*(mcalinf-mcal)/taumcal
+#hcal' = 3.7*(hcalinf-hcal)/tauhcal
+p'=(pinf-p)/taup
+r'=(rinf-r)/tausr
+mAHP' = (mAHPinf-mAHP)/taumAHP
+mCAN'=(mCANinf-mCAN)/tauCAN
+#
+@ total=500, xp=t, yp=v, dt=1, xlo=0, xhi=500, ylo=-80, yhi=80,  
+@ meth=stiff, bound=1000
+@ autovar=Iapp,ntst=50,nmax=2000,npr=2000,dsmin=0.001,dsmax=.1,ds=0.01
+@ parmin=-300,parmax=2000,autoxmin=-50,autoxmax=50,autoymin=-80,autoymax=80
+done
