@@ -1,0 +1,537 @@
+clear all
+clc
+[InputSpikes,OutputSpikes,TransferRatio,RetSps,LGNSpS,RetLGNdelay]=voltageclamp;
+
+function [dummy1,Maxtimes,TransFreq,RetSpikeperSec,LGNSpikeperSec,Avgdelay]=voltageclamp
+%[Iapp,gTLT,gcal,gM,gH,gKL,gK,gNAP,gL]
+%Parms=[.016407    3.4578    0.2224    0*0.36*.3    0.2230*.3    .2566*3    4.4515    0.0263    0.9791];
+Parms=[2.7855407    3.04578   .2224    .45*.3    0.2030*.3    .1*3    4.4515    0.0263    0.9791];
+%Parms=[1.455407    4.0578    .2224    0.4*.3    0.2030*.3    .8*3    4.4515    0.0263    0.9791];
+prespiketime=2000;
+t_int=[0:prespiketime];
+
+S0 =[-57,.05,.6,.3,.0004,.3,.3,.05,.6,.05,.6,.2,-80];
+%S0 =[-1,.007,.99,.02,.00007,.6,.001,.001,.45,.006,.27,.2,-80];
+
+%S0 =[-57,.09,.9,.03,.0006,.3,.001,.005,.4,.02,.1,.2,-80];
+options = odeset('RelTol',1e-7,'AbsTol',1e-7); 
+%[sol]=ode15s(@deRHS,t_int,S0,options);
+[sol]=ode45(@(t,S)deRHS(t,S,Parms),t_int,S0,options);
+
+
+RetSpikeNum=200;
+RetSpikeFreq=20;
+%FreqHz=1000/RetSpikeFreq
+%SpikeTimes=zeros(1,RetSpikeNum)+RetSpikeFreq;
+SpikeTimes=poissrnd(RetSpikeFreq,1,RetSpikeNum);
+%SpikeTimes=RetSpikeFreq+.4*RetSpikeFreq*randn(1,RetSpikeNum);
+%SpikeTimes=4*gamrnd(4,1,[1,60]);
+%SpikeTimes=4*gamrnd(4,1,[1,RetSpikeNum]);
+%SpikeTimes=diff([2000,2011.06706514331,2034.23487288452,2043.50932509640,2056.08175668490,2076.80701530511,2106.04573630150,2125.78959366416,2128.48461222988,2144.40645211103,2161.53617776371,2164.69032848015,2170.02929682312,2178.98997364599,2186.27243120936,2195.32513321289,2204.73443468735,2215.09939964630,2244.43882488967,2262.47830280303,2283.91789242661,2306.42054306038]);
+
+%SpikeTimes=diff([2000,2011.06706514331,2034.23487288452,2043.50932509640,2056.08175668490,2076.80701530511,2106.04573630150,2125.78959366416,2128.48461222988,2161.53617776371,2164.69032848015,2170.02929682312,2178.98997364599,2186 ,2203,2204.73443468735,2210,2244.43882488967,2262.47830280303,2283.91789242661,2306.42054306038]);
+%SpikeTimes=diff([2000,2013.56415914593,2034.91793743290,2067.31846647140,2082.42746105346,2108.72128351064,2140.22814289855,2163.45845264506,2198.60731477232,2216.94780490621,2220.75780702211,2241.97886333885,2264.24341578457,2281.61945949567,2292.97870192378,2310.59478475166,2346.44950501245,2356.92154596565,2380.70318150950,2425.50113028029,2449.72439356512,2465.00493214317,2496.38984477277,2540.07306301012,2557.37223987427,2588.33639693027,2605.86360134325,2620.02352748292,2647.35877365458,2671.20351143525,2682.52592757425,2703.43967079820,2738.80262592889,2757.94049131515,2800.52331690945,2807.68098637531,2827.01780280831,2850.48862316337,2858.70731890641,2873.77338478015,2896.65196959356,2913.06299709346,2954.75510052641,2987.51277707306,3015.99369215744,3049.19527825391,3053.96694510920,3066.73893709978,3078.07734544884,3102.74220479183,3119.96563940693,3138.85564371836,3147.46739023524,3163.86557252137,3193.43547200262,3227.32783854100,3238.56681537897,3273.58815516547,3290.74311715977,3298.03125273145,3316.58417441260,3331.89711449543,3354.66312509505,3393.46911941868,3422.75255499312,3441.88818426452,3474.18666878615,3508.26857609606,3518.12106778058,3544.44808033486,3566.17641721546,3586.02528142716,3595.26605926200,3614.70788609854,3625.14496554189,3653.22967473024,3670.76723323457,3680.47672601665,3707.51421652130,3720.58535339845,3739.62012259551,3754.25452415664,3779.96238690088,3821.86130836805,3828.60791269855,3849.58822536677,3863.07207793192,3894.91907896766,3915.67613832013,3927.21535972128,3949.06917183612,3965.69026902289,3976.77471991869,4011.92879870628,4035.52239104102,4055.84808726877,4068.91508667279,4080.37202970290,4089.96590350600,4117.01687966274,4135.15529411757,4176.73693924730,4193.41930172934,4246.25461365347,4259.72947645510,4286.75089991252,4298.44625869821,4316.76578079633,4336.33653388779,4344.89983705874,4351.95284627443,4367.47055822578,4381.12447024922,4411.51481514948,4417.15140657161,4444.86866909389,4457.26538353580,4476.94990100372,4487.15438336591,4516.23394102578,4525.48051037199,4536.91506516545,4560.20875627580,4582.81791100020,4593.48458705408,4605.02642544343,4614.87906436646,4644.30066879270,4661.25233118058,4674.34063279149,4695.21942661170,4708.71705262373,4736.44321154456,4752.57530201100,4763.52449924565,4798.74069636939,4810.12357200914,4826.19297270344,4837.85844183049,4861.03649362797,4882.67248271289,4890.58061347609,4895.69429373177,4939.41819729462,4957.68531393539,4981.55577197383,5000.03059841908,5011.60956257097,5023.67198751204,5038.66298918302,5073.01100263900,5087.02717701254,5101.18559684335,5124.49101001822,5136.03614828580,5148.40546739254,5179.19868614502,5220.72563658975,5245.98608341779,5280.12869511012,5298.69581311476,5311.82027241801,5333.80619143763,5353.43619744162,5371.69718648493,5385.94904357510,5401.16700045728,5412.84715398065,5431.69472637290,5452.84172393403,5479.07935085170,5487.42423334529,5511.00099777989,5521.73248094198,5540.38369908412,5561.46686168253,5598.61228508969,5604.86636461180,5615.67456899141,5628.92332870779,5640.57204332783,5669.67834466641,5695.33026327897,5712.32583921061,5758.26157707597,5774.83348340119,5786.42931845690,5826.48407299069,5838.97240474528,5865.03118437270,5890.04807696034,5907.15695335947,5931.11492774308,5943.62191499561,5963.55895869400,5983.14919125884,6000.38709787916,6018.35918784880,6046.49571806290,6057.89669953168,6090.12695062936,6102.84983937336,6122.16953083789,6134.29990063579,6154.14121040133,6175.70060524524,6209.82497597187,6216.87768550383,6230.14118397333,6250.65700483981,6252.97481606565,6268.22450418911,6290.86821064665,6316.40778010562,6326.79359996699,6350.05560787655,6361.10190669872,6382.60170410460,6410.06153332058,6426.22784325727,6470.53570015212,6489.69038248366,6513.23678562958,6533.94913375972,6562.63186838051,6597.57544348819,6603.08101613517,6613.92355301951,6629.04604375499,6649.88306434487,6662.40030223745,6689.42733324225,6697.51672291766,6717.87474424191,6743.32330409324,6759.69339091475,6782.77266769373,6792.74696599170,6812.34480291513,6830.39123514610,6855.04724996466,6882.24356571774,6900.51672249928,6911.36872615635,6921.95309138747,6938.43577794327,6960.31932879738,6989.03819470006,7004.41353859503,7025.64677164669,7043.52540182490,7066.44766210123,7085.25838080797,7106.70342197741,7123.21261570955,7140.57672070671,7162.93903526590,7171.44358503752,7196.38856900598,7202.88543065610,7215.64087565963,7224.17626362129,7244.92237883136,7268.10732949320,7284.32729140394,7307.65637957261,7330.32988853368,7334.45939434657,7347.38262410998,7384.94496304142,7405.02506651468,7421.37932365149,7443.06661925706,7473.94828593447,7488.39562465061,7506.17545383269,7529.03734280539,7540.46319502761,7567.49940618189,7592.77669206593,7621.09557680865,7658.89148045524,7678.29981879639,7693.08435287177,7725.58303858063,7759.32223390217,7773.31017297242,7786.04296959944,7822.36702201406,7836.23260832423,7852.45255089461,7854.72023482730,7868.97268616606,7880.34070907096,7894.11878906870,7904.04935354475,7919.89291215514,7927.66523469179,7950.21236276501,7970.13720646813,7997.18735897546,8048.67610554994,8071.08726108074,8082.05157298997,8127.29284604545,8145.22600993248,8161.14486022636,8176.01864136152,8186.71955325544,8200.08278123752,8220.76482960798,8237.79171073470,8271.00313057623,8289.65366055161,8312.92935650090,8361.27618497235,8389.73996347928,8403.38668171947,8445.28209036275,8458.16806822567,8477.95798474895,8501.83759699600,8512.56255296662,8521.55872669331,8543.70572775187,8554.52928861309,8594.17844719364,8616.10655556605,8636.07689117988,8644.10963951780,8697.62769808138,8702.43914310294,8729.04313666264,8745.90067516733,8755.81345620534,8793.84038668116,8802.99193292021,8811.49798200678,8837.87754548948,8853.06437269862,8897.16290844357,8911.93271359778,8927.71134352165,8943.45455020063,8964.18947703101,8991.21442609921,9022.04987672882,9047.13075990359,9056.44949577457,9062.87155176884,9081.41180442981,9087.71118283878,9103.66850900580,9113.00300799452,9129.04280517216,9145.68832904531,9160.64658476588,9182.04853973340,9196.42974352566,9204.16584209638,9228.93353273735,9255.60446519212,9277.77614103516,9314.90584305307,9337.62745429487,9346.45365316852,9368.08708643367,9391.27819578804,9410.58593206405,9429.14830661216,9447.39791693210,9464.87898527865,9478.94057810419,9508.08315159451,9518.79921173079,9539.50610595753,9558.07732060156,9577.78759217063,9590.41367654490,9619.63514401640,9655.12020362539,9668.33312724320,9703.71526461808,9724.09773261348,9742.73938986526,9751.31723289847,9776.74295575874,9793.00025965024,9812.25845002864,9862.79640587950,9879.51913302446,9892.58944247321,9917.72314978049,9949.05089254006,9966.46419687976,9979.51342394441,10006.2327425191,10046.2042720849,10067.4571217610,10090.7277103767,10101.1334628770,10123.0392969719,10137.8189253534,10158.3405574717,10167.3832088815,10182.4643960165,10188.7633094268,10199.0566578406,10240.4319892061,10251.9868483750,10296.2683551030,10336.4518641879,10355.3219231904,10395.1132652159,10408.0311604209,10419.1778978112,10456.4365821821,10468.4160826395,10480.8471513761,10507.6028902030,10526.1080237035,10559.3116475513,10576.0661493172,10593.3273849133,10606.3528414140,10629.0824408470,10650.1867591898,10679.7668667937,10697.4849023617,10718.0486637168,10733.3827682495,10769.3531421704,10815.2087388453,10833.7601481799,10872.3028972445,10887.7071996301,10912.9049934577,10917.8718137611,10925.0022638056,10960.2502562215,11003.7466392952,11019.8201304130,11033.8036322450,11037.5182792985,11058.6595647454,11104.4135497376,11114.8701703157,11143.1715146188,11156.3895976107,11165.8939737563,11178.7727843497,11208.0228307460,11242.5728874774,11263.3041369241,11288.2221658498,11318.2042568499,11343.8698787611,11365.5934788831,11372.2275455488,11386.1220927430,11406.1149907789,11424.7522083888,11433.1366824473,11462.6414455912,11495.6509483483,11530.9098450182,11541.7535205033,11566.3125797143,11576.4278000967,11598.2355135255,11609.2091425776,11627.4300527893,11638.5078498035,11664.3277364188,11683.6508897680,11694.2411879350,11709.2949618688,11729.5592634196,11743.3389300880,11790.2566766380,11803.0060866718,11819.1459485851,11861.1036978888,11870.4018972685,11878.0966073944,11894.7468461168,11916.7673500252,11928.3892389087,11945.7457237547,11968.4563827180,11996.2997396004,12005.9171395492,12033.4993039562,12048.6724661881,12059.9385435860,12076.3561366344,12090.3219831333,12106.1831290967,12120.0849341022,12142.5427362910]);
+%disp(length(SpikeTimes))
+
+
+SpikeNum=100;
+SpikeFreq=16;
+BurstNum=40;
+BurstFreq=16;
+%BurstFreq=SpikeFreq;
+BurstFreqHz=1000/BurstFreq
+SpikeFreqHz=1000/SpikeFreq
+
+
+%A=poissrnd(SpikeFreq,1,SpikeNum);
+A=zeros(1,SpikeNum)+SpikeFreq;
+%B=poissrnd(BurstFreq,1,BurstNum);
+B=zeros(1,BurstNum)+BurstFreq;
+
+C=[A,B];
+
+SpikeTimes=C(randperm(length(C)));
+
+SpikeCounts=3;
+
+D=zeros(1,SpikeCounts)+SpikeFreq;
+%D=poissrnd(SpikeFreq,1,3)
+F=[D,BurstFreq];
+SpikeTimes=repmat(F,1,20);
+
+
+TotalFrequency=1000/sum(F)
+
+
+for i=1:length(SpikeTimes)
+%endtime=RetSpikeFreq*i+t_int(end);
+%endtime=20*(i+.5*randn)+t_int(end);
+endtime=sum(SpikeTimes(1,1:i))+t_int(end);
+%endtime=SpikeTimes(1,i);
+sol.y(13,end)=10;
+sol=odextend(sol,@(t,S)deRHS(t,S,Parms),endtime);
+
+end
+
+
+
+
+time=sol.x;
+yvals=sol.y;
+InpV=yvals(13,:);
+OutV=yvals(1,:);
+
+
+
+
+minIDs = islocalmax(InpV,'MinProminence',20);
+dummy1=time(minIDs);
+dummy2=InpV(minIDs);
+
+MaxInds=islocalmax(OutV,'MinProminence',20);
+
+MaxVs=OutV(MaxInds);
+Maxtimes=time(MaxInds);
+
+indices = find((Maxtimes)<prespiketime);
+Maxtimes(indices) = [];
+MaxVs(indices) = [];
+%disp(Maxtimes)
+
+TransFreq=length(Maxtimes)/length(dummy1);
+TransFreq1=length(Maxtimes)/length(SpikeTimes);
+
+RetSpikeperSec=length(SpikeTimes)/sum(SpikeTimes)*1000;
+% disp(length(Maxtimes))
+% disp(time(end)-prespiketime)
+LGNSpikeperSec=length(Maxtimes)/(time(end)-prespiketime)*1000;
+%Spiketimes=Maxtimes(Maxtimes)
+
+% Spikecount = islocalmax(yvals(1,:));
+% dummy3=time(Spikecount);
+% dummy4=yvals(Spikecount);
+
+
+RetDrivers=zeros(1,length(Maxtimes));
+    for i=1:length(Maxtimes)
+        A=dummy1-Maxtimes(i);
+        [~,idx]=max(A(A<0));
+        minVal=dummy1(idx);
+        RetDrivers(i)=minVal;
+    end
+
+%Pick only the driving retinal spikes?    
+
+    
+RetLGNdelay=Maxtimes-RetDrivers;
+Avgdelay=mean(RetLGNdelay);
+mediandelay=(median(RetLGNdelay))
+
+%Pick only the driving retinal spikes?
+RetDrivers=RetDrivers(RetLGNdelay<12);
+
+
+PreRetDriver=zeros(1,length(RetDrivers));
+    for i=1:length(RetDrivers)
+        B=dummy1-RetDrivers(i);
+        [~,idx]=max(B(B<0));
+        minVal=dummy1(idx);
+        if isempty(minVal)
+            PreRetDriver(i)=NaN;
+        else
+            PreRetDriver(i)=minVal;
+        end
+
+    end
+    
+RetSpikeDelay=RetDrivers-PreRetDriver;
+%disp(length(RetSpikeDelay))
+    
+%fix the distance between time sampling in the matlab simulatino of the
+%ode? aka make T=[0:.1:2000]
+% fs = 10000; 
+% fourier = fft(yvals(1,2000:end));
+% n = length(yvals(1,2000:end));          % number of samples
+% f = (0:n-1)*(fs/n);     % frequency range
+% power = abs(fourier).^2/n; % power of the DFT
+% 
+% [p1,f1] = pspectrum(yvals(1,2000:end));
+% 
+% figure(10)
+% plot(f1,pow2db(p1))
+% xlim([1,100])
+% 
+% figure(1)
+% hold on
+% plot(time,yvals(1,:))
+% % plot(dummy3,dummy4,'ro')
+% xlabel('Time (ms)')
+% ylabel('Membrane potential (mV)')
+% 
+% figure(2)
+% hold on
+% plot(time,yvals(13,:))
+% plot(dummy1,dummy2,'ro')
+
+
+
+figure(3)
+hold on
+plot(time,yvals(1,:))
+%plot(time,yvals(13,:),'r')
+plot(dummy1,dummy2,'ro')
+%plot(Maxtimes,MaxVs,'go')
+ylim([-100,11])
+xlabel('Time (ms)')
+ylabel('Membrane potential (mV)')
+
+TEMP = 310.35;
+F=96485.3;
+Rgas=8.314;
+z = 2;
+EH_IN = -43;
+EKL_IN=-100;
+EL_IN=-85;
+EH_IN = -43;
+EK_IN=-100;
+ENa_IN=50;
+ECA_IN=Rgas*TEMP/(z*F)*log(2./yvals(5,:))*1000;
+
+% figure(11)
+% histogram(RetLGNdelay,'BinWidth',1)
+% %title('RetLgnISI')
+% ylabel('Count')
+% xlabel('Retina to LGN delay (ms)')
+% 
+% figure(12)
+% hold on
+% histogram(SpikeTimes,'edgecolor','none','BinWidth',3);
+% histogram(RetSpikeDelay,'edgecolor','none','BinWidth',3);
+% hold off
+% ylabel('Count')
+% xlabel('Retina ISI (ms)')
+% legend('AllSpikes','LGNDrivers')
+
+%RetSpikeDelay./SpikeTimes
+edges1=3*(1:15);
+[N1,edges1] = histcounts(SpikeTimes,edges1);
+[N2,edges2] = histcounts(RetSpikeDelay,edges1);
+
+sum(N2)/sum(N1);
+
+
+% figure(13)
+% plot(edges1(1,2:end),N2./N1)
+% 
+figure(14)
+histogram(diff(Maxtimes),'edgecolor','none','BinWidth',1)
+ylabel('Count')
+xlabel('LGN ISI (ms)')
+
+[N3,edges3] = histcounts(diff(Maxtimes),edges1);
+
+sum(N3)/sum(N1);
+gammaratio=sum(N3(1,4:6))/sum(N1(1,4:6))
+
+figure(15)
+hold on
+% yyaxis left
+% scatter(BurstFreq,TransFreq,'b')
+% ylabel('Ratio of Inputs to Outputs')
+% yyaxis right
+scatter(TotalFrequency,gammaratio,'b')
+ylabel('Ratio of Gamma Inputs to Gamma Outputs')
+xlabel('Delay Length (ms)')
+
+% figure(16)
+% hold on
+% yyaxis left
+% scatter(SpikeCounts,TransFreq,200,'b')
+% ylabel('Ratio of Inputs to Outputs')
+% yyaxis right
+% scatter(SpikeCounts,gammaratio,200,'r')
+% ylabel('Ratio of Gamma Inputs to Gamma Outputs')
+% xlabel('Delay Length (ms)')
+
+
+deltaspt=20;
+sdp=diff(Maxtimes(2:end));
+sdm=diff(Maxtimes(1:end-1));
+
+x=sdp;
+bigNumbersLocations = x > deltaspt;
+x(bigNumbersLocations) = [];
+%do something with the variance, make the variance tightly knit
+
+%bs=[];
+bs2=zeros(1,length(sdp));
+%be=[];
+be2=zeros(1,length(sdp));
+
+for k=1:length(sdp)
+    if sdp(k)<deltaspt && sdm(k) >deltaspt
+        %bs=[bs,Spikes(k+1)];
+        bs2(k)=Maxtimes(k+1);
+    elseif sdp(k) <deltaspt && Maxtimes(k)==time(1)
+        %bs=[bs,Spikes(k+1)];
+        bs2(k)=Maxtimes(k+1);
+    elseif sdp(k) >deltaspt && sdm(k) >deltaspt   
+        bs2(k)=Maxtimes(k+1);
+    end
+    if sdp(k)>deltaspt && sdm(k) <deltaspt
+       %be=[be,Spikes(k+1)];
+       be2(k)=Maxtimes(k+1);
+    elseif sdm(k) <deltaspt && Maxtimes(k+1)==Maxtimes(end-1)
+       %be=[be,Spikes(k+1)];
+       be2(k)=Maxtimes(k+1);
+    elseif sdp(k) >deltaspt && sdm(k) >deltaspt   
+       be2(k)=Maxtimes(k+1);   
+    end
+end
+
+%disp(Spikes)
+% disp(sdm)
+% %disp(sdp)
+%  disp(bs);
+%  disp(nonzeros(bs2)');
+ bs=nonzeros(bs2)';
+ be=nonzeros(be2)';
+%   disp(be);
+
+if length(be)==length(bs)-1
+     bs(end)=[];
+end
+
+if length(bs)==length(be)-1
+     be(1)=[];
+end
+
+ %disp(bs)
+ %disp(be)
+
+delb=be-bs;
+taub=diff(bs);
+if length(bs)==1
+    fb=0;
+    dc=0;
+else
+    fb=mean(1./taub);
+    dc=mean(delb)/mean(taub);
+end
+
+%figure out what to do if you get out a steady state, what should the error
+%for this be?
+
+burnum=length(be)
+freq=fb
+
+% figure(4)
+% hold on
+% yyaxis left
+% scatter(BurstFreqHz,freq*1000/BurstFreqHz,200,'b')
+% ylabel('Ratio of Input to Output Frequency')
+% yyaxis right
+% scatter(BurstFreqHz,length(Maxtimes)/burnum,200,'r')
+% ylabel('Spikes per output "burst"')
+% xlabel('Delay Length (ms)')
+
+% figure(5)
+% hold on
+% scatter(SpikeFreqHz,freq*1000,200,'b')
+% plot([min([xlim ylim]) max([xlim ylim])], [min([xlim ylim]) max([xlim ylim])], '--r')
+% ylabel('Output Frequency (Hz)')
+% xlabel('Input Frequency (Hz)')
+% axis normal
+
+end
+
+
+function s_prime=deRHS(t,s,Parms)
+
+%Periodic input variables
+Einp=0;
+ginp=.6;
+
+
+%3.5 was the original magic number
+%Origianl paramter SET
+%[Iapp,gTLT,gcal,gM,gH,gKL,gK,gNAP,gL]
+W=[1,1,1,.3,.3,1,10,1,1];
+%Parms=[1.5    4.5263    0.3118    1*.2712*.3    0.1458*.3    0.1113    5.8765    0.0030    0.2963];
+%Parms=[2.7775  4.5157    0.2018    .4512*.3    0.0770*.3    0.0998    3.8922    0.0030    0.2885];
+%Parms=[-0.1775  4.5157    0*0.2018    0*.5012*.3    0.0770*.3    0.0998    3.8922    0.0030    0.2885];
+
+%%Second parameter set with KL becoming the sleep-wake transition
+%Parms=[3.4007    3.4578    0.2324    0.5692*.3    0.2230*.3    .1266*3    4.4515    0.0263    0.9791];
+
+Iapp=Parms(1);
+gTLT_IN=Parms(2);
+gcal=Parms(3);
+gM=Parms(4);
+gH_IN=Parms(5);
+gKL_IN=Parms(6);
+gK_IN=Parms(7);
+gNAP=Parms(8);
+gL_IN=Parms(9);
+%Iapp=-3.51425989739342;
+%gTLT_IN=4.09319943433719;
+%gcal=0.862372448885894;
+%gM=0.791416217319468;
+%gH_IN =0.318799378419276;
+%gKL_IN=0.0189709906679457;
+gNa_IN=90;
+%gNAP=.03;
+%gK_IN=4.7170618320821;
+%gL_IN=0.080;
+TEMP = 310.35;
+vshift=55;
+F=96485.3;
+Rgas=8.314;
+z = 2;
+EH_IN = -43;
+EKL_IN=-100;
+EL_IN=-85;
+EK_IN=-100;
+ENa_IN=50;
+Cm_IN = 1 ;
+
+if t<2000
+    Iapp=Parms(1);
+    
+else
+    %Iapp=Parms(1)-abs(.2*sin(20*pi*t/1000));
+    %Iapp=Parms(1)+1;
+    Iapp=Parms(1);
+    %Iapp=2.4;
+    %print(t)
+end
+
+% CALCIUM in units of mM?
+%State Vars
+V=s(1);
+mNa=s(2);
+hNa=s(3);
+mK=s(4);
+Cai=s(5);
+mTLT=s(6);
+hTLT=s(7);
+qcal=s(8);
+rcal=s(9);
+r=s(10);
+p=s(11);
+Sinp=s(12);
+Vext=s(13);
+
+%Rates
+mV=1;
+ms=1;
+Vt=V+vshift;
+alphamNa=(0.32*(13*mV-Vt))./(exp((13*mV-Vt)/4/mV)-1);
+betamNa = (0.28*(Vt-40*mV))./(exp((Vt-40*mV)/5/mV)-1);
+alphahNa=(0.128*exp((17*mV-Vt)/18)) ;
+betahNa = 4./(1+exp((40*mV-Vt)/5));
+mNainf = alphamNa./(alphamNa+betamNa) ;
+taumNa=1*ms./(alphamNa+betamNa)  ;   
+hNainf = alphahNa./(alphahNa+betahNa); 
+tauhNa=1*ms./(alphahNa+betahNa); 
+alphamK = (0.032*(15*mV-Vt)/mV)./(exp((15*mV-Vt)/5/mV)-1);
+betamK=0.5 * exp((10*mV-Vt)/40/mV);
+mKinf = alphamK./(alphamK+betamK);
+taumK=1*ms/(alphamK+betamK);
+tausr=(1*ms)./(exp(-.086*V-14.59)+exp((.07*V-1.87)));
+rinf = 1./(1+exp((V+75*mV)/5.5));
+ECA_IN=Rgas*TEMP/(z*F)*log(2/Cai)*1000;
+
+
+%mcalinf=1./(1+exp((-(V+10))/(4)));
+%hcalinf=1./(1+exp(((V+25))/2));
+%taumcal=.4+.7./(exp((-(V+5))/15)+exp(((V+5))/15));
+%tauhcal=300+100./(exp((-(V+40))/9.5)+exp(((V+40))/9.5));
+
+hTLTinf = 1/(1+exp((V+86*mV)/4/mV));
+%tauhTLT=  1*ms*exp((V+470*mV)/66.6/mV).*heaviside(-V-83)+1*ms*(exp(-(V+25*mV)/10.5)+28).*heaviside(V+83);
+taumTLT= .612*ms+(1*ms)./(exp(-(V+135)/16.7)+(exp((V+19.8)/18.2)));
+mTLTinf = 1./(1+exp(-(V+62*mV)/6.2/mV));
+
+pinf=1./(1+exp(-(V+35)/10));
+taup=1000./(3.3*exp((V+35)/20)+exp(-(V+35)/20));
+
+mNAPinf=1./(1+exp(-(V+50)/5));
+
+if V <-83
+    tauhTLT=1*ms*exp((V+470*mV)/66.6/mV);
+else
+    tauhTLT=1*ms*(exp(-(V+25*mV)/10.5)+28);
+end
+
+tauhTLT=(30.8+ (211.4 + exp((V+115.2*mV)/5/mV))./(1+exp((V+86*mV)/3.2/mV)))/1*ms;
+
+alphaq=.055*(-27-V)./(exp((-27-V)/3.8)-1);
+betaq=.94*exp((-75-V)/17);
+alphar=.000457*exp((-13-V)/50);
+betar=.0065/(exp((-15-V)/28)+1);
+
+qcalinf = alphaq./(alphaq+betaq);
+tauqcal=1./(alphaq+betaq);     
+rcalinf = alphar./(alphar+betar);
+taurcal=1./(alphar+betar);
+% dqca_L/dt = (qcalinf-qca_L)/tauqcal : 1
+%         drca_L/dt = (rcalinf-rca_L)/taurcal : 1
+%         qcalinf = alphaq/(alphaq+betaq) : 1
+%         tauqcal=1*ms/(alphaq+betaq) : second      
+%         rcalinf = alphar/(alphar+betar) : 1
+%         taurcal=1*ms/(alphar+betar) : second
+%         alphaq=.055*(-27*mV-V)/(exp((-27*mV-V)/3.8/mV)-1)/mV : 1
+%         betaq=.94*exp((-75*mV-V)/17/mV) : 1
+%         alphar=.000457*exp((-13*mV-V)/50/mV) : 1
+%         betar=.0065/(exp((-15*mV-V)/28/mV)+1) : 1
+
+%Currents
+INa=gNa_IN*mNa.^3.*hNa.*(V-ENa_IN);
+IK=gK_IN.*mK.^4.*(V-EK_IN);
+IL=.02*gL_IN*(V-EL_IN);
+IKL=.02*gKL_IN*(V-EKL_IN);
+IH = gH_IN * r .* (V-EH_IN);
+ITLT = gTLT_IN * mTLT.^2 .* hTLT .* (V-ECA_IN);
+ICAL= gcal*qcal.^2.*rcal.*(V-ECA_IN);
+IM=gM*p.*(V-EK_IN);
+INAP=.5*gNAP*mNAPinf.*(V-ENa_IN);
+
+
+%%%%%%MAKE A SPIKING INPUT INTO THE NEURON
+Taudinp=.7;
+Taurinp=.125;
+
+%Might need to look into Retinal Spike timing influences to change how
+%quickly they impact the cell
+
+% Taudinp=5;
+% Taurinp=.25;
+
+
+Iinp=Sinp*ginp*(V-Einp);
+
+% grandom=.01;
+% Irand=grandom*(-1+2*rand);
+%Vext=-20;
+
+%%%RHS of the ODE equations
+
+%-INa-IK-IL-IKL-IH-ITLT+Iapp-ITHT-ICAL-IAHP-ICAN
+
+s_prime=[(-INa-IK-IL-IKL-IH-ITLT+Iapp-ICAL-IM-INAP-Iinp)/Cm_IN,...
+    (mNainf-mNa)./taumNa,...
+    (hNainf-hNa)./tauhNa,...
+    (mKinf-mK)./taumK,...
+    ((-ITLT-ICAL)/(2*96485.3*.5))- (Cai-0.00005)/10,...
+    4.6*(mTLTinf-mTLT)./taumTLT,...
+    3.7*(hTLTinf-hTLT)./tauhTLT,...
+    (qcalinf-qcal)./tauqcal,...
+    (rcalinf-rcal)./taurcal,...
+    (rinf-r)./tausr,...
+    (pinf-p)./taup,...
+    -Sinp/Taudinp+(1-Sinp)/Taurinp*.5*(1+tanh(Vext/10)),...
+    2*(-60-Vext)]';
+  
+  
+end
