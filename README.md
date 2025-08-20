@@ -1,4 +1,4 @@
-# Thalamocortical-Highthreshold-Bursting-Cell-Model
+# Thalamocortical High- threshold Bursting CellModel
 
 Here we have the variety of different codes required to run the simulations which generate the different figures throughout the main text and supplement of the paper "Specific intrinsic currents of an LGN thalamocortical cell model allow for awake firing dynamics necessary to explain retinal transfer properties".
 
